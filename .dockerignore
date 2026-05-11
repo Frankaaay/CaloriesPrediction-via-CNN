@@ -1,0 +1,7 @@
+venv/
+realsense_overhead/
+metadata/
+__pycache__/
+.pytest_cache/
+tests/
+.git/

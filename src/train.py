@@ -114,8 +114,8 @@ def train(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train Calories CNN")
-    parser.add_argument("--data_dir", type=str, default="../realsense_overhead/", help="Path to image dataset")
-    parser.add_argument("--metadata", type=str, default="../nutrition_data.csv", help="Path to metadata CSV")
+    parser.add_argument("--data_dir", type=str, default="realsense_overhead/", help="Path to image dataset")
+    parser.add_argument("--metadata", type=str, default="metadata/nutrition_data.csv", help="Path to metadata CSV")
     parser.add_argument("--epochs", type=int, default=5, help="Number of training epochs")
     parser.add_argument("--save_path", type=str, default="model.pth", help="Path to save the model weights")
     args = parser.parse_args()

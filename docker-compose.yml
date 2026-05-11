@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  # The API Backend Service
+  api:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    ports:
+      - "8000:8000"
+    # Optional: If you update the model locally, it will mount instantly without rebuilding
+    volumes:
+      - ./model.pth:/app/model.pth
+
+  # The Streamlit Frontend Service
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend.Dockerfile
+    ports:
+      - "8501:8501"
+    environment:
+      # We override the API_URL so it maps to the internal Docker network
+      - API_URL=http://api:8000/predict
+    depends_on:
+      - api
