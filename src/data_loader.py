@@ -11,20 +11,34 @@ class FoodDataset(Dataset):
     def __init__(self, root_dir, metadata_csv, transform=None):
         self.root_dir = root_dir
         self.transform = transform
-        # Load only first 8 columns as the original code did
-        self.data = pd.read_csv(metadata_csv, header=None, usecols=range(8))
+        
+        # The CSV has a variable number of columns depending on the number of ingredients.
+        # We declare 'names=range(200)' to force Pandas to parse up to 200 columns safely,
+        # but 'usecols=[0, 1]' selectively keeps only dish_id and calories.
+        self.data = pd.read_csv(metadata_csv, header=None, names=range(200), usecols=[0, 1], low_memory=False)
+        self._missing_printed = 0
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        dish_id = self.data.iloc[idx].iloc[0]
-        calories = self.data.iloc[idx].iloc[1]
+        # Force string & strip to avoid whitespace or weird formatting
+        dish_id = str(self.data.iloc[idx, 0]).strip()
+        
+        try:
+            calories = float(self.data.iloc[idx, 1])
+        except (ValueError, TypeError):
+            calories = np.nan
 
-        # In original data, dish_id might be float/int, parse it explicitly
-        img_path = os.path.join(self.root_dir, f"{dish_id}.png")
+        # The dataset has folders named dish_ID, containing rgb.png
+        img_path = os.path.join(self.root_dir, dish_id, "rgb.png")
         
         if not os.path.isfile(img_path):
+            if self._missing_printed < 3:
+                print(f"⚠️ DEBUG Warning: Could not find image at path: {img_path}")
+                self._missing_printed += 1
+                
+            image = Image.new("RGB", (225, 225), (0, 0, 0))  # Black image
             image = Image.new("RGB", (225, 225), (0, 0, 0))  # Black image
             if self.transform:
                 image = self.transform(image)
