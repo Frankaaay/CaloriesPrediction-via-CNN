@@ -1,1 +1,7 @@
-gsutil
+torch
+torchvision
+pandas
+numpy
+Pillow
+pytest
+streamlit

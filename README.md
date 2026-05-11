@@ -1,47 +1,77 @@
 # Calories Prediction via CNN
 
-This project uses a convolutional neural network to estimate the calories in a food image. The pipeline is built around the Nutrition5k dataset, which provides overhead dish imagery plus metadata for dish and ingredient nutrition values. The repository focuses on turning the raw image archive into a flat training set, pairing each image with calorie labels, and training a ResNet-based regression model.
+An industrial-grade deep learning pipeline that uses a Convolutional Neural Network (CNN) to estimate the calories in a food image. Built around the Nutrition5k dataset, this project processes overhead dish imagery and nutrition metadata into a modular PyTorch application.
 
-Dataset reference: https://github.com/google-research-datasets/Nutrition5k?tab=readme-ov-file
+Dataset reference: [Nutrition5k Dataset](https://github.com/google-research-datasets/Nutrition5k?tab=readme-ov-file)
+
+## Architecture
+
+This application wraps a `ResNet50` architecture. The final fully-connected (FC) layer has been modified into a regression head that maps extracted image features to a single float output (calories).
+
+| Component | Stack | Description |
+|-----------|-------|-------------|
+| **Data Loader** | `torch.utils.data` / `pandas` | Custom parser that pairs `realsense_overhead/*.png` to `nutrition_data.csv` calorie labels. |
+| **Model** | `torchvision.models` | `ResNet50` fine-tuned using AdamW and an L1Loss (MAE) objective. |
+| **Pipeline** | Modular Python `.py` | Transitioned from exploratory EDA to script-based training and inference. |
 
 ## Project Structure
 
-- `src/food_is_good.ipynb` is the expanded notebook version with dataset setup, training, evaluation, and inference examples.
-- `nutrition_data.csv` contains the calorie labels used by the dataset loader.
-- `metadata/` stores supporting Nutrition5k metadata files.
+```text
+├── src/
+│   ├── data_loader.py         # Custom FoodDataset and transform pipelines
+│   ├── model.py               # Pretrained ResNet50 definitions
+│   ├── train.py               # Training loop and metric evaluation
+│   └── predict.py             # Model inference on single images
+├── notebooks/
+│   └── 01_eda_and_prototyping.ipynb # Original data exploration notebook
+├── tests/
+│   └── test_data_loader.py    # Pytest unit tests for tensor transformations
+├── data/                      # Local datasets (not tracked)
+├── model.pth                  # Saved weights (not tracked)
+├── requirements.txt           # Python dependencies
+└── README.md                  # Project documentation
+```
 
-## Setup
+## Quick Start
 
-1. Use Python 3.12 or a compatible Python 3 environment.
-2. Create and activate a virtual environment.
-3. Install the project dependencies:
+### 1. Environment Setup
+
+It is highly recommended to use Python 3.12 and a virtual environment.
 
 ```bash
+python -m venv venv
+# On Windows
+venv\Scripts\activate
+# On Unix
+source venv/bin/activate
+
 pip install -r requirements.txt
 ```
 
-The notebook and training script also rely on `torch`, `torchvision`, `pandas`, `numpy`, and `Pillow`.
+### 2. Prepare Data
 
-## Data Preparation
+Download the [Nutrition5k imagery archive](https://github.com/google-research-datasets/Nutrition5k) and extract it to the root of the project (e.g. `realsense_overhead/`).
 
-1. Download the Nutrition5k overhead imagery archive, for example:
+### 3. Run Tests
+
+Verify your data loader logic runs nominally before kicking off expensive training.
 
 ```bash
-gsutil -m cp -r "gs://nutrition5k_dataset/nutrition5k_dataset/imagery/realsense_overhead" .
+pytest tests/
 ```
 
-2. Use the notebook cells to unzip the archive, inspect the extracted files, and prepare the image folder for training.
-3. If you want a flat image directory, run the same cleanup logic from the notebook or adapt it into a small helper script.
+### 4. Train the Model
 
-## Training Workflow
+The default configuration expects a `realsense_overhead/` folder and `nutrition_data.csv` in your root.
 
-The notebook is now the main workflow and follows this sequence:
+```bash
+python src/train.py --data_dir ./realsense_overhead/ --metadata ./nutrition_data.csv --epochs 10 --save_path model.pth
+```
 
-1. Unzip or load the image archive.
-2. Define a `FoodDataset` that matches image files with calorie labels from `nutrition_data.csv`.
-3. Split the dataset into training and test subsets.
-4. Fine-tune a pretrained ResNet50 model for calorie regression.
-5. Evaluate the model with MAE and RMSE.
-6. Run inference on example food images and compare predictions with labels when available.
+### 5. Prediction / Inference
 
+Test the model's accuracy on an unseen pizza or salad.
 
+```bash
+python src/predict.py realsense_overhead/dish_1556575273.png --model_path model.pth
+```

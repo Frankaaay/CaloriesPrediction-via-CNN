@@ -1,2 +1,5 @@
 /realsense_overhead
 /venv
+*.pth
+__pycache__/
+.pytest_cache/
